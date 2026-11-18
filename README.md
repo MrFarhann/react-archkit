@@ -1,12 +1,10 @@
-# React ArchKit
+# create-react-archkit
 
-**Start with the architecture you want. Build the React app you have in mind.**
+**React ArchKit** is an interactive CLI for scaffolding React + Vite projects with your choice of architecture, including Feature-Based, Domain-Based, Feature-Sliced Design, and Atomic Design.
 
-React ArchKit is an interactive CLI that scaffolds a React + Vite project around your choice of architecture. Pick your folder structure, language, styling, and integrations in one guided setup, then make the generated project your own.
+[npm package](https://www.npmjs.com/package/create-react-archkit) · [GitHub repository](https://github.com/MrFarhann/react-archkit)
 
-The starter is a small task app: you can add tasks, view the list, and toggle completion. Its task state lives in memory, so it resets when the page reloads. The same example is organized differently for each architecture, making the trade-offs easy to explore.
-
----
+Pick your folder structure, language, styling, and integrations in one guided setup, then make the generated project your own.
 
 ## Quick start
 
@@ -37,6 +35,8 @@ npm run dev
 If you created the project in the current directory with `.`, skip the `cd my-app` step.
 
 Open the local URL printed by Vite. Run `npm run build` to create a production build and `npm run preview` to preview it locally. For TypeScript projects, the build also checks types.
+
+The starter is a small task app: you can add tasks, view the list, and toggle completion. Its task state lives in memory, so it resets when the page reloads. The same example is organized differently for each architecture, making the trade-offs easy to explore.
 
 ## How it works
 

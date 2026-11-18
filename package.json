@@ -1,7 +1,27 @@
 {
   "name": "create-react-archkit",
-  "version": "1.0.1",
-  "description": "Scaffold a React + Vite app with a choice of architecture",
+  "version": "1.0.2",
+  "description": "Scaffold React and Vite apps with your choice of project architecture",
+  "keywords": [
+    "react",
+    "vite",
+    "scaffolding",
+    "project-generator",
+    "cli",
+    "react-architecture",
+    "feature-sliced-design",
+    "atomic-design",
+    "typescript",
+    "javascript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrFarhann/react-archkit.git"
+  },
+  "homepage": "https://github.com/MrFarhann/react-archkit#readme",
+  "bugs": {
+    "url": "https://github.com/MrFarhann/react-archkit/issues"
+  },
   "type": "module",
   "bin": {
     "create-react-archkit": "bin/cli.js"
