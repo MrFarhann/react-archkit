@@ -109,6 +109,34 @@ test('failed generation removes only files and directories created by that run',
   assert.equal(await readFile(sentinel, 'utf8'), 'existing user data')
 })
 
+test('failed generation in an existing empty directory preserves that directory', async t => {
+  const dir = await tempDir(t)
+  const targetDir = path.join(dir, 'sample-app')
+  await mkdir(targetDir)
+  const script = `
+    import fs from 'node:fs/promises';
+    import { syncBuiltinESMExports } from 'node:module';
+    const original = fs.open;
+    let writes = 0;
+    fs.open = async (...args) => {
+      const handle = await original(...args);
+      if (++writes === 3) handle.writeFile = async () => { throw new Error('injected failure') };
+      return handle;
+    };
+    syncBuiltinESMExports();
+    const { generateProject } = await import(${JSON.stringify(pathToFileURL(path.join(root, 'src/generator.js')).href)});
+    try {
+      await generateProject({ projectName: 'sample-app', targetDir: ${JSON.stringify(targetDir)}, useExistingDirectory: true, architecture: 'Type-Based', naming: 'kebab-case', language: 'JavaScript', tailwind: false, shadcn: false });
+      process.exitCode = 1;
+    } catch (error) {
+      if (error.message !== 'injected failure') throw error;
+    }
+  `
+  execFileSync(process.execPath, ['--input-type=module', '-e', script], { cwd: dir, encoding: 'utf8' })
+  assert.ok((await stat(targetDir)).isDirectory())
+  assert.deepEqual(await readdir(targetDir), [])
+})
+
 for (const architecture of architectures) {
   for (const language of languages) {
     for (const style of styles) {

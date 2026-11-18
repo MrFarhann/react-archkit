@@ -1,6 +1,6 @@
 {
   "name": "create-react-archkit",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scaffold a React + Vite app with a choice of architecture",
   "type": "module",
   "bin": {

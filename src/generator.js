@@ -1,4 +1,4 @@
-import { mkdir, open, unlink, rmdir } from 'node:fs/promises';
+import { lstat, mkdir, open, readdir, unlink, rmdir } from 'node:fs/promises';
 import path from 'node:path';
 import { architectureFiles } from './architectures.js';
 import { appStyles } from './styles.js';
@@ -70,14 +70,22 @@ export async function generateProject(options) {
   if (!targetDir || !architectures.includes(architecture) || !namings.includes(naming) || !['TypeScript', 'JavaScript'].includes(language) || typeof tailwind !== 'boolean' || typeof shadcn !== 'boolean' || (shadcn && !tailwind)) throw new Error('Invalid project options.');
   if (typeof options.pwa !== 'boolean' || !['generateSW', 'injectManifest'].includes(options.pwaStrategy) || !['prompt', 'autoUpdate'].includes(options.pwaUpdate) || !['Biome', 'Prettier'].includes(options.formatter) || typeof options.esbuild !== 'boolean' || typeof options.axios !== 'boolean' || typeof options.graphify !== 'boolean' || (options.formatter === 'Biome' && options.esbuild)) throw new Error('Invalid integration options.');
   const target = path.resolve(targetDir);
+  if (options.useExistingDirectory !== undefined && typeof options.useExistingDirectory !== 'boolean') throw new Error('Invalid project options.');
   const { files: architectureSources, appPath } = architectureFiles(options);
   const files = { ...sharedFiles(options, appPath), ...architectureSources };
   applyOptions(files, options);
   const createdFiles = [];
   const createdDirs = [];
   try {
-    await mkdir(target); // Exclusive: never adopt an existing directory.
-    createdDirs.push(target);
+    if (options.useExistingDirectory) {
+      const stat = await lstat(target);
+      if (!stat.isDirectory() || (await readdir(target)).length > 0) {
+        throw new Error(`Destination must be an empty directory: ${target}`);
+      }
+    } else {
+      await mkdir(target); // Exclusive: never adopt an existing directory by default.
+      createdDirs.push(target);
+    }
     for (const [relative, content] of Object.entries(files)) {
       const destination = path.resolve(target, relative);
       if (!destination.startsWith(target + path.sep)) throw new Error('Unsafe template path.');
@@ -85,7 +93,7 @@ export async function generateProject(options) {
       let current = target;
       for (const part of parts) {
         current = path.join(current, part);
-        try { await mkdir(current); createdDirs.push(current); } catch (error) { if (error.code !== 'EEXIST') throw error; }
+        if (!createdDirs.includes(current)) { await mkdir(current); createdDirs.push(current); }
       }
       const handle = await open(destination, 'wx');
       createdFiles.push(destination);

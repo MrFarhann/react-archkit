@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,8 +10,10 @@ const cli = fileURLToPath(new URL('../bin/cli.js', import.meta.url));
 
 // Drive each prompt only after it appears, as a real user would. This uses no PTY
 // dependency and also checks the CLI handles piped input without losing answers.
-async function runInterview(formatter, create, { pwa = true, strategy = 'generateSW', update = 'prompt' } = {}) {
-  const cwd = await mkdtemp(path.join(os.tmpdir(), 'react-archkit-cli-'));
+async function runInterview(formatter, create, { pwa = true, strategy = 'generateSW', update = 'prompt', current = false } = {}) {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'react-archkit-cli-'));
+  const cwd = current ? path.join(temp, 'current-app') : temp;
+  if (current) await mkdir(cwd);
   const steps = [
     ['Do you want a Progressive Web App (PWA)?', pwa ? '\r' : '\x1b[B\r'],
     ...(pwa ? [
@@ -29,7 +31,7 @@ async function runInterview(formatter, create, { pwa = true, strategy = 'generat
     ['Create this project?', create ? '\r' : 'n\r'],
   ];
   try {
-    const child = spawn(process.execPath, [cli, 'interview-app'], {
+    const child = spawn(process.execPath, [cli, current ? '.' : 'interview-app'], {
       cwd, stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env, FORCE_COLOR: '0', TERM: 'dumb' },
     });
@@ -75,8 +77,12 @@ async function runInterview(formatter, create, { pwa = true, strategy = 'generat
     if (!create) {
       assert.deepEqual(await readdir(cwd), [], 'cancellation must not create project files');
     } else {
-      const project = path.join(cwd, 'interview-app');
+      const project = current ? cwd : path.join(cwd, 'interview-app');
       const pkg = JSON.parse(await readFile(path.join(project, 'package.json'), 'utf8'));
+      if (current) {
+        assert.equal(pkg.name, 'current-app');
+        assert.doesNotMatch(output, /\n\s+cd current-app/);
+      }
       const viteConfig = await readFile(path.join(project, 'vite.config.js'), 'utf8');
       const docs = await readFile(path.join(project, 'PROJECT_STRUCTURE.md'), 'utf8');
       assert.equal(Boolean(pkg.devDependencies['vite-plugin-pwa']), pwa);
@@ -93,7 +99,7 @@ async function runInterview(formatter, create, { pwa = true, strategy = 'generat
       assert.equal(Boolean(pkg.devDependencies.esbuild), formatter === 'Prettier');
     }
   } finally {
-    await rm(cwd, { recursive: true, force: true });
+    await rm(temp, { recursive: true, force: true });
   }
 }
 
@@ -104,3 +110,29 @@ for (const formatter of ['Biome', 'Prettier']) {
 
 test('interactive PWA-off skips worker questions', { timeout: 30000 }, async () => runInterview('Biome', true, { pwa: false }));
 test('interactive custom worker and auto update', { timeout: 30000 }, async () => runInterview('Prettier', true, { strategy: 'injectManifest', update: 'autoUpdate' }));
+
+test('dot creates a project inside an empty current directory', { timeout: 30000 }, async () => runInterview('Biome', true, { pwa: false, current: true }));
+
+test('dot rejects a nonempty current directory without modifying its files', async t => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'react-archkit-cli-'));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const cwd = path.join(temp, 'current-app');
+  await mkdir(cwd);
+  await writeFile(path.join(cwd, 'keep.txt'), 'existing user data');
+  const result = spawnSync(process.execPath, [cli, '.'], { cwd, encoding: 'utf8', timeout: 10000 });
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr, /empty|not empty/i);
+  assert.deepEqual(await readdir(cwd), ['keep.txt']);
+  assert.equal(await readFile(path.join(cwd, 'keep.txt'), 'utf8'), 'existing user data');
+});
+
+test('dot rejects a current directory with an invalid package name', async t => {
+  const temp = await mkdtemp(path.join(os.tmpdir(), 'react-archkit-cli-'));
+  t.after(() => rm(temp, { recursive: true, force: true }));
+  const cwd = path.join(temp, 'Invalid Name');
+  await mkdir(cwd);
+  const result = spawnSync(process.execPath, [cli, '.'], { cwd, encoding: 'utf8', timeout: 10000 });
+  assert.notEqual(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stderr, /name/i);
+  assert.deepEqual(await readdir(cwd), []);
+});

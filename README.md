@@ -12,7 +12,7 @@ The starter is a small task app: you can add tasks, view the list, and toggle co
 
 **Requirements:** Node.js 20.19 or newer in the 20.x line, or Node.js 22.12 or newer, and npm. The generated project has the same Node.js requirement.
 
-Once the package is published to npm, run:
+Run:
 
 ```sh
 npm create react-archkit@latest my-app
@@ -24,6 +24,8 @@ Or use `npx`:
 npx create-react-archkit@latest my-app
 ```
 
+To create a project in the current directory, run `npx create-react-archkit@latest .` in an empty directory. The directory name must be a valid lowercase npm package name; it becomes the generated package name. Existing files are never overwritten.
+
 Follow the prompts, review the summary, and confirm. Dependencies are not installed automatically; after generation, run:
 
 ```sh
@@ -32,9 +34,9 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. Run `npm run build` to create a production build and `npm run preview` to preview it locally. For TypeScript projects, the build also checks types.
+If you created the project in the current directory with `.`, skip the `cd my-app` step.
 
-> The npm commands above are available after the package is published. Until then, use the [local development setup](#developing-react-archkit).
+Open the local URL printed by Vite. Run `npm run build` to create a production build and `npm run preview` to preview it locally. For TypeScript projects, the build also checks types.
 
 ## How it works
 
@@ -44,7 +46,7 @@ Open the local URL printed by Vite. Run `npm run build` to create a production b
 4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter and optional integrations.
 5. **Review and create.** Confirm the printed choices and destination. React ArchKit creates the files; you install dependencies and start the dev server.
 
-The destination must not already exist: it is never overwritten. Press `Ctrl+C` to cancel. For command-line help, use `npx create-react-archkit@latest --help` after publication, or `node bin/cli.js --help` from a local checkout.
+For a named project, the destination must not already exist. When using `.`, the current directory must be empty. Existing files are never overwritten. Press `Ctrl+C` to cancel. For command-line help, use `npx create-react-archkit@latest --help`, or `node bin/cli.js --help` from a local checkout.
 
 ## Choose an architecture
 

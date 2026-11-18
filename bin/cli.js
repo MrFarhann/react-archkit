@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { lstat } from 'node:fs/promises';
+import { lstat, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { confirm, input, select } from '@inquirer/prompts';
 import { generateProject, validateProjectName } from '../src/generator.js';
@@ -30,7 +30,8 @@ Options:
 
 Examples:
   npm create react-archkit@latest my-app
-  npx create-react-archkit@latest my-app`;
+  npx create-react-archkit@latest my-app
+  npx create-react-archkit@latest .`;
 
 async function exists(target) {
   try {
@@ -52,7 +53,8 @@ async function main() {
     throw new Error('Expected at most one project name. Use --help for usage.');
   }
 
-  const projectName = args[0] ?? await input({
+  const useExistingDirectory = ['.', './', '.\\'].includes(args[0]);
+  const projectName = useExistingDirectory ? path.basename(process.cwd()) : (args[0] ?? await input({
     message: 'What is your project name?',
     validate(value) {
       try {
@@ -62,10 +64,18 @@ async function main() {
         return error.message;
       }
     },
-  });
-  validateProjectName(projectName);
-  const targetDir = path.resolve(process.cwd(), projectName);
-  if (await exists(targetDir)) {
+  }));
+  try {
+    validateProjectName(projectName);
+  } catch (error) {
+    if (useExistingDirectory) throw new Error(`Current directory name "${projectName}" is not a valid project name. Rename the directory to a valid lowercase npm package name, or create a project in a new folder.`);
+    throw error;
+  }
+  const targetDir = useExistingDirectory ? process.cwd() : path.resolve(process.cwd(), projectName);
+  if (useExistingDirectory && (await readdir(targetDir)).length > 0) {
+    throw new Error(`Current directory is not empty: ${targetDir}. Choose an empty directory.`);
+  }
+  if (!useExistingDirectory && await exists(targetDir)) {
     throw new Error(`Destination already exists: ${targetDir}. Choose a different project name.`);
   }
 
@@ -132,8 +142,8 @@ async function main() {
     return;
   }
 
-  await generateProject({ projectName, targetDir, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify });
-  console.log(`\nProject created successfully. Next steps:\n\n  cd ${projectName}\n  npm install\n  npm run dev\n`);
+  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify });
+  console.log(`\nProject created successfully. Next steps:\n\n${useExistingDirectory ? '' : `  cd ${projectName}\n`}  npm install\n  npm run dev\n`);
 }
 
 main().catch((error) => {
