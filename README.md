@@ -43,7 +43,7 @@ The starter is a small task app: you can add tasks, view the list, and toggle co
 1. **Name your project.** Pass the name as an argument or omit it to be prompted. Use a lowercase npm-compatible name that is also a safe single folder name, such as `my-app`.
 2. **Choose PWA support.** If enabled, choose a service worker strategy and update behavior.
 3. **Choose your foundation.** Select an architecture, a file and folder naming convention, and TypeScript or JavaScript.
-4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter and optional integrations.
+4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter or no formatter and optional integrations. In the TanStack checkbox menu, press Space to select each tool and Enter to continue; selecting none is fine.
 5. **Review and create.** Confirm the printed choices and destination. React ArchKit creates the files; you install dependencies and start the dev server.
 
 For a named project, the destination must not already exist. When using `.`, the current directory must be empty. Existing files are never overwritten. Press `Ctrl+C` to cancel. For command-line help, use `npx create-react-archkit@latest --help`, or `node bin/cli.js --help` from a local checkout.
@@ -67,17 +67,35 @@ All five starters provide the same task interactions. Each generated README give
 | **Language** | TypeScript or JavaScript |
 | **Naming** | `kebab-case`, `camelCase`, `PascalCase`, `snake_case`, or `UPPER_CASE` |
 | **Styling** | Plain CSS, Tailwind CSS v4, or Tailwind CSS with shadcn/ui |
-| **Formatting** | Biome or Prettier |
+| **Formatting** | Biome, Prettier, or no formatter |
 | **PWA** | Optional service worker and web app manifest |
-| **Integrations** | Optional Axios client and Graphify configuration |
+| **Integrations** | Optional Axios client, Graphify configuration, and TanStack tools |
 
 The naming convention applies to changeable example files and folders. React component identifiers remain PascalCase; tooling files, entry points, fixed architecture paths, and required configuration paths keep their expected names. Generated imports follow the chosen paths.
 
-The shadcn/ui option requires Tailwind and includes configuration and a working Button component. You can add further components with the shadcn CLI. Biome adds formatting and linting scripts; Prettier adds formatting and format-check scripts. If you choose Prettier, you can also select esbuild as an additional direct dependency and Vite production minifier; Vite already uses esbuild internally regardless of that choice.
+The shadcn/ui option requires Tailwind and includes configuration and working Button, Input, and Card components. You can add further components with the shadcn CLI. Biome adds formatting and linting scripts; Prettier adds formatting and format-check scripts. Choosing **No formatter** adds neither formatter, their configuration, nor formatting or linting scripts. The optional direct esbuild dependency is offered only when Prettier is selected; Vite already uses esbuild internally regardless of that choice.
 
 Choosing Axios adds a starter HTTP client configured with `/api` and a timeout; configure it for your API before use. Choosing Graphify adds configuration and a `graphify:build` script. Graphify is a separate Python tool, not an npm dependency: the generated README provides installation instructions. The script extracts a code-only graph into `graphify-out/` and does not generate a report.
 
 Generated projects also support `pnpm install` and `pnpm dev` with pnpm 10.25 or newer. Their pnpm configuration permits esbuild's install script; other dependencies requiring build scripts still need review.
+
+## TanStack tools
+
+Choose any combination of these React-compatible libraries, or leave them all unchecked. Only selected packages are added; dependencies are installed when you run `npm install` or `pnpm install` in the generated project.
+
+| Tool | Starter setup |
+| --- | --- |
+| [Router](https://tanstack.com/router/latest/docs/framework/react/overview) | File-based home and about pages, navigation, and the Vite router plugin. The home page retains the chosen architecture's task app. |
+| [Query](https://tanstack.com/query/latest/docs/framework/react/overview) | A shared `QueryClientProvider` and a local asynchronous query example; replace the sample query with your API. |
+| [Table](https://tanstack.com/table/v8/docs/framework/react/overview) | A small headless table example using the stable v8 API. |
+| [Charts](https://tanstack.com/charts/latest/docs/overview) | A small chart example using the React adapter. |
+| [Form](https://tanstack.com/form/latest/docs/framework/react/overview) | A form with field validation and submit handling. |
+| [Virtual](https://tanstack.com/virtual/latest/docs/framework/react/react-virtual) | A scrollable virtualized list example. |
+| [Store](https://tanstack.com/store/latest/docs/framework/react/overview) | A shared counter store example. Store is a 0.x package, so its API may change. |
+
+Router's fixed `src/routes/` filenames and generated route tree follow its file-based routing convention rather than the selected example naming convention. The route tree is generated when Vite starts or builds. Other selected tools are demonstrated in `src/tanstack-examples.tsx` or `src/tanstack-examples.jsx`, which you can adapt or remove. TanStack Start is not included because it is a full-stack framework, while this generator creates client-side Vite projects.
+
+The task list is in-memory example state. With Router enabled, leaving the home page unmounts the task app, so its tasks are cleared when you return; add persistent or shared state for a real application.
 
 ## Progressive Web Apps
 
@@ -112,3 +130,5 @@ The suite generates projects across architectures, languages, and styling choice
 ## License
 
 [MIT](LICENSE)
+
+The starter UI uses an original CSS layout and system fonts. Its optional components are adapted from [shadcn/ui](https://ui.shadcn.com/); the upstream MIT notice is included in generated projects and in [src/licenses/shadcn-ui.txt](src/licenses/shadcn-ui.txt). The starter is built with [React](https://react.dev/) and [Vite](https://vite.dev/).

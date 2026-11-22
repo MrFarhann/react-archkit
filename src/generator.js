@@ -3,6 +3,8 @@ import path from 'node:path';
 import { architectureFiles } from './architectures.js';
 import { appStyles } from './styles.js';
 import { applyOptions } from './options.js';
+import { tanstackTools } from './tanstack-tools.js';
+import { addShadcnComponents } from './shadcn.js';
 
 const architectures = ['Type-Based', 'Feature-Based', 'Domain-Based', 'Feature-Sliced Design (FSD)', 'Atomic Design'];
 const namings = ['kebab-case', 'camelCase', 'PascalCase', 'snake_case', 'UPPER_CASE'];
@@ -47,7 +49,7 @@ function sharedFiles(options, appPath) {
     [ts ? 'tsconfig.json' : 'jsconfig.json']: json(ts ? config : { compilerOptions: { baseUrl: '.', paths: { '@/*': ['./src/*'] }, jsx: 'react-jsx' }, include: ['src'] }),
     [`src/main.${ext}`]: `import React from 'react';\nimport { createRoot } from 'react-dom/client';\nimport App from './${appPath.replace(/\.(tsx|jsx)$/, '')}';\nimport './index.css';\n\nconst root = document.getElementById('root');\nif (!root) throw new Error('Root element not found');\ncreateRoot(root).render(<React.StrictMode><App /></React.StrictMode>);\n`,
     'src/index.css': appStyles(tailwind),
-    'README.md': `# ${projectName}\n\nA React + Vite task app using **${architecture}**, ${language}, and ${shadcn ? 'Tailwind CSS with shadcn/ui' : tailwind ? 'Tailwind CSS' : 'plain CSS'}.\n\n## Run\n\nRequires Node.js 20.19+ or 22.12+.\n\n\`\`\`sh\nnpm install\nnpm run dev\n\`\`\`\n\nRun \`npm run build\` for a production build${ts ? ' including type checking' : ''}.\n\nFor pnpm 10.25 or newer, run \`pnpm install\` and \`pnpm dev\`. The generated pnpm configuration permits only esbuild's install script; other dependencies that require build scripts still need review.\n\n## Extend the example\n\n${guides[architecture]}\n\nThe selected **${naming}** convention applies to changeable sample file and folder names. Tooling filenames, entry points, architecture layer names and shadcn/ui paths remain fixed where required. React component identifiers remain PascalCase.\n${shadcn ? '\nshadcn/ui is configured: add components with `npx shadcn@latest add card`. The CLI uses the aliases in `components.json`.\n' : ''}`
+    'README.md': `# ${projectName}\n\nA React + Vite task app using **${architecture}**, ${language}, and ${shadcn ? 'Tailwind CSS with shadcn/ui' : tailwind ? 'Tailwind CSS' : 'plain CSS'}.\n\n## Run\n\nRequires Node.js 20.19+ or 22.12+.\n\n\`\`\`sh\nnpm install\nnpm run dev\n\`\`\`\n\nRun \`npm run build\` for a production build${ts ? ' including type checking' : ''}.\n\nFor pnpm 10.25 or newer, run \`pnpm install\` and \`pnpm dev\`. The generated pnpm configuration permits only esbuild's install script; other dependencies that require build scripts still need review.\n\n## Extend the example\n\n${guides[architecture]}\n\nThe selected **${naming}** convention applies to changeable sample file and folder names. Tooling filenames, entry points, architecture layer names and shadcn/ui paths remain fixed where required. React component identifiers remain PascalCase.\n${shadcn ? '\nshadcn/ui is configured: add components with `npx shadcn@latest add badge`. The CLI uses the aliases in `components.json`.\n' : ''}`
   };
   if (shadcn) {
     const tokens = { background: '#ffffff', foreground: '#171717', card: '#ffffff', 'card-foreground': '#171717', popover: '#ffffff', 'popover-foreground': '#171717', primary: '#171717', 'primary-foreground': '#fafafa', secondary: '#f5f5f5', 'secondary-foreground': '#171717', muted: '#f5f5f5', 'muted-foreground': '#737373', accent: '#f5f5f5', 'accent-foreground': '#171717', destructive: '#dc2626', border: '#e5e5e5', input: '#e5e5e5', ring: '#a3a3a3' };
@@ -57,18 +59,22 @@ function sharedFiles(options, appPath) {
     files['components.json'] = json({ '$schema': 'https://ui.shadcn.com/schema.json', style: 'new-york', rsc: false, tsx: ts, tailwind: { config: '', css: 'src/index.css', baseColor: 'neutral', cssVariables: true, prefix: '' }, aliases: { components: fsd ? '@/shared' : '@/components', utils: `@/${libDir}/utils`, ui: `@/${uiDir}`, lib: `@/${libDir}`, hooks: fsd ? '@/shared/hooks' : '@/hooks' }, iconLibrary: 'lucide' });
     files[`src/${libDir}/utils.${ts ? 'ts' : 'js'}`] = `import { clsx${ts ? ', type ClassValue' : ''} } from 'clsx';\nimport { twMerge } from 'tailwind-merge';\n\nexport function cn(...inputs${ts ? ': ClassValue[]' : ''}) { return twMerge(clsx(inputs)); }\n`;
     files[`src/${uiDir}/button.${ext}`] = `import * as React from 'react';\nimport { Slot } from '@radix-ui/react-slot';\nimport { cva${ts ? ', type VariantProps' : ''} } from 'class-variance-authority';\nimport { cn } from '@/${libDir}/utils';\n\nconst buttonVariants = cva('inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:pointer-events-none disabled:opacity-50', { variants: { variant: { default: 'bg-blue-600 text-white hover:bg-blue-700', outline: 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-100' }, size: { default: 'h-10 px-4 py-2', sm: 'h-9 px-3' } }, defaultVariants: { variant: 'default', size: 'default' } });\n${ts ? "type ButtonProps = React.ComponentProps<'button'> & VariantProps<typeof buttonVariants> & { asChild?: boolean };\n" : ''}function Button({ className, variant, size, asChild = false, ...props }${ts ? ': ButtonProps' : ''}) {\n  const Comp = asChild ? Slot : 'button';\n  return <Comp className={cn(buttonVariants({ variant, size, className }))} {...props} />;\n}\nexport { Button, buttonVariants };\n`;
+    addShadcnComponents(files, { uiDir, libDir, ext, ts });
   }
+  files['README.md'] += `\n## UI sources\n\n- The starter layout and CSS are original to React ArchKit and use system fonts; no external fonts or image assets are loaded.\n- Built with [React](https://react.dev/) and [Vite](https://vite.dev/).\n${shadcn ? '- Components are adapted from shadcn/ui: [Button](https://ui.shadcn.com/docs/components/radix/button), [Input](https://ui.shadcn.com/docs/components/radix/input) and [Card](https://ui.shadcn.com/docs/components/radix/card). See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for the MIT copyright and license.\n' : ''}`;
   return files;
 }
 
 export async function generateProject(options) {
-  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, ...options };
+  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, tanstack: [], ...options };
   options.pwaStrategy ??= 'generateSW';
   options.pwaUpdate ??= 'prompt';
   const { projectName, targetDir, architecture, naming, language, tailwind, shadcn } = options;
   validateProjectName(projectName);
   if (!targetDir || !architectures.includes(architecture) || !namings.includes(naming) || !['TypeScript', 'JavaScript'].includes(language) || typeof tailwind !== 'boolean' || typeof shadcn !== 'boolean' || (shadcn && !tailwind)) throw new Error('Invalid project options.');
-  if (typeof options.pwa !== 'boolean' || !['generateSW', 'injectManifest'].includes(options.pwaStrategy) || !['prompt', 'autoUpdate'].includes(options.pwaUpdate) || !['Biome', 'Prettier'].includes(options.formatter) || typeof options.esbuild !== 'boolean' || typeof options.axios !== 'boolean' || typeof options.graphify !== 'boolean' || (options.formatter === 'Biome' && options.esbuild)) throw new Error('Invalid integration options.');
+  if (typeof options.pwa !== 'boolean' || !['generateSW', 'injectManifest'].includes(options.pwaStrategy) || !['prompt', 'autoUpdate'].includes(options.pwaUpdate) || !['Biome', 'Prettier', 'None'].includes(options.formatter) || typeof options.esbuild !== 'boolean' || typeof options.axios !== 'boolean' || typeof options.graphify !== 'boolean' || (options.formatter !== 'Prettier' && options.esbuild)) throw new Error('Invalid integration options.');
+  const validTanstack = new Set(tanstackTools.map(({ value }) => value));
+  if (!Array.isArray(options.tanstack) || options.tanstack.some(tool => !validTanstack.has(tool)) || new Set(options.tanstack).size !== options.tanstack.length) throw new Error('Invalid TanStack tools selection.');
   const target = path.resolve(targetDir);
   if (options.useExistingDirectory !== undefined && typeof options.useExistingDirectory !== 'boolean') throw new Error('Invalid project options.');
   const { files: architectureSources, appPath } = architectureFiles(options);

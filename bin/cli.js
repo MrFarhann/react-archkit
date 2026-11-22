@@ -2,8 +2,9 @@
 
 import { lstat, readdir } from 'node:fs/promises';
 import path from 'node:path';
-import { confirm, input, select } from '@inquirer/prompts';
+import { checkbox, confirm, input, select } from '@inquirer/prompts';
 import { generateProject, validateProjectName } from '../src/generator.js';
+import { tanstackTools } from '../src/tanstack-tools.js';
 
 const architectures = [
   ['Type-Based', 'Group code by technical role'],
@@ -120,7 +121,11 @@ async function main() {
 
   const formatter = await select({
     message: 'Which formatter do you want?',
-    choices: ['Biome', 'Prettier'].map((value) => ({ name: value, value })),
+    choices: [
+      { name: 'Biome', value: 'Biome' },
+      { name: 'Prettier', value: 'Prettier' },
+      { name: 'No formatter', value: 'None' },
+    ],
   });
   // Vite itself uses esbuild; this option controls a separate, direct dependency.
   const esbuild = formatter === 'Prettier' ? await select({
@@ -135,14 +140,19 @@ async function main() {
     message: 'Do you want Graphify?',
     choices: [{ name: 'Yes', value: true }, { name: 'No', value: false }],
   });
+  const tanstack = await checkbox({
+    message: 'Which TanStack tools do you want to use?',
+    choices: tanstackTools,
+    instructions: 'Use space to select, enter to continue.',
+  });
 
-  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\n`);
+  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\nTanStack: ${tanstack.length ? tanstack.join(', ') : 'None'}\n`);
   if (!await confirm({ message: 'Create this project?', default: true })) {
     console.log('Project creation cancelled.');
     return;
   }
 
-  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify });
+  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify, tanstack });
   console.log(`\nProject created successfully. Next steps:\n\n${useExistingDirectory ? '' : `  cd ${projectName}\n`}  npm install\n  npm run dev\n`);
 }
 

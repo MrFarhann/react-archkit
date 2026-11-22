@@ -1,7 +1,19 @@
 import path from 'node:path';
 
+/** Shared footer for every generated page, including Router routes. */
+export const starterFooter = `<footer className="footer">
+        <div className="footer-attribution">
+          <p className="footer-copy">A little progress goes a long way <span aria-hidden="true">✳</span></p>
+          <p className="footer-credit">Developed by <a href="https://github.com/MrFarhann" target="_blank" rel="noopener noreferrer">Farhan (@MrFarhann)</a></p>
+        </div>
+        <nav className="footer-links" aria-label="Project links">
+          <a href="https://github.com/MrFarhann/react-archkit" target="_blank" rel="noopener noreferrer">React ArchKit <span aria-hidden="true">↗</span></a>
+          <a href="https://vite.dev/" target="_blank" rel="noopener noreferrer">Vite <span aria-hidden="true">↗</span></a>
+        </nav>
+      </footer>`;
+
 /** Generate architecture-specific source files. Paths returned by this module are package independent. */
-export function architectureFiles({ architecture, language, naming, shadcn }) {
+export function architectureFiles({ architecture, language, naming, shadcn, tanstack = [] }) {
   const ts = language === 'TypeScript';
   const ext = ts ? 'tsx' : 'jsx';
   const mod = ts ? 'ts' : 'js';
@@ -25,13 +37,48 @@ export function architectureFiles({ architecture, language, naming, shadcn }) {
     return result;
   };
   const put = (p, s) => { files[p] = s.trimStart(); };
-  // Keep the page shell consistent while leaving each architecture's feature wiring intact.
-  const topbar = `<header className="topbar"><a className="brand" href="/" aria-label="Daymark home"><span className="brand-mark" aria-hidden="true">✦</span><span className="brand-name">daymark<span>.</span></span></a><span className="topbar-badge"><span aria-hidden="true">✳</span> A little more focus</span></header>`;
-  const hero = `<section className="hero"><p className="eyebrow"><span aria-hidden="true">✦</span> MAKE ROOM FOR WHAT MATTERS</p><h1 className="hero-title">A little progress,<br /><em>every day.</em></h1><p className="hero-copy">Clear your mind, find your focus, and make space for the things that matter most.</p></section>`;
-  const workspaceHeading = `<div className="section-heading"><div><p className="section-kicker">YOUR SPACE</p><h2>Things to do<span>.</span></h2></div><span className="task-count">Your list</span></div>`;
-  const listHeading = `<div className="list-heading"><p className="list-label">YOUR TASKS</p><span className="list-count">A little at a time</span></div>`;
-  const empty = `<div className="empty"><span className="empty-icon" aria-hidden="true">✓</span><p className="empty-title">A fresh start awaits.</p><p className="empty-copy">Add your first task and make today count.</p></div>`;
-  const footer = `<footer className="footer"><p className="footer-copy">Made for a little more clarity <span aria-hidden="true">✦</span></p><nav className="footer-links" aria-label="Project links"><a href="https://github.com/MrFarhann" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="https://vite.dev/" target="_blank" rel="noopener noreferrer">Vite <span aria-hidden="true">↗</span></a></nav></footer>`;
+  const hasExamples = tanstack.some((tool) => tool !== 'router');
+  const examplesImport = hasExamples ? "import { TanStackExamples } from '@/tanstack-examples';\n" : '';
+  // Keep one coherent shell while leaving each architecture's feature wiring intact.
+  const uiBase = architecture === 'Feature-Sliced Design (FSD)' ? 'shared' : 'components';
+  const cardImport = shadcn ? `import { Card } from '@/${uiBase}/ui/card';\n` : '';
+  const workspaceOpen = shadcn ? '<Card className="workspace" role="region" aria-label="Task list">' : '<section className="workspace" aria-label="Task list">';
+  const workspaceClose = shadcn ? '</Card>' : '</section>';
+  // The Router root renders the shared header on every route when enabled.
+  const topbar = tanstack.includes('router') ? '' : `<header className="topbar">
+        <a className="brand" href="/" aria-label="Daymark home">
+          <span className="brand-mark" aria-hidden="true">✳</span>
+          <span className="brand-copy">
+            <span className="brand-name">daymark<span>.</span></span>
+            <span className="brand-caption">A LITTLE SPACE FOR YOU</span>
+          </span>
+        </a>
+        <span className="topbar-badge"><span className="topbar-status-dot" aria-hidden="true"></span> YOUR DAILY SPACE</span>
+      </header>`;
+  const hero = `<section className="hero">
+          <p className="eyebrow"><span aria-hidden="true">✳</span> MAKE SPACE FOR WHAT MATTERS</p>
+          <h1 className="hero-title">A little less noise.<br /><em>A little more focus.</em></h1>
+          <p className="hero-copy">A quiet place for the things on your mind. Write them down, take a breath, and start wherever you are.</p>
+          <p className="hero-meta"><span className="hero-meta-dot" aria-hidden="true"></span> SMALL STEPS, EVERY DAY</p>
+        </section>`;
+  const workspaceHeading = `<div className="section-heading">
+            <div className="workspace-intro">
+              <p className="section-kicker">YOUR WORKSPACE</p>
+              <h2>Today’s list<span>.</span></h2>
+              <p className="workspace-helper">One thing at a time. You’ve got this.</p>
+            </div>
+            <span className="task-count">{taskCount} {taskCount === 1 ? 'task' : 'tasks'}</span>
+          </div>`;
+  const listHeading = `<div className="list-heading">
+            <p className="list-label">YOUR TASKS</p>
+            <span className="list-count" aria-live="polite" aria-atomic="true">{completedCount} of {taskCount} done</span>
+          </div>`;
+  const empty = `<div className="empty">
+      <span className="empty-icon" aria-hidden="true">✳</span>
+      <p className="empty-title">A clear space to begin.</p>
+      <p className="empty-copy">Add a task above and make room for what matters.</p>
+    </div>`;
+  const footer = starterFooter;
   const model = (p) => put(p, `${ts ? 'export type Task = { id: string; title: string; completed: boolean };\n\n' : ''}export function createTask(title${ts ? ': string' : ''})${ts ? ': Task' : ''} {
   return { id: crypto.randomUUID(), title, completed: false };
 }
@@ -55,7 +102,7 @@ export function useTasks() {
 }
 `);
   const form = (p) => put(p, `import { useState${ts ? ', type FormEvent' : ''} } from 'react';
-${shadcn ? `import { Button } from '@/${architecture === 'Feature-Sliced Design (FSD)' ? 'shared' : 'components'}/ui/button';\n` : ''}
+${shadcn ? `import { Button } from '@/${uiBase}/ui/button';\nimport { Input } from '@/${uiBase}/ui/input';\n` : ''}
 export function AddTaskForm({ onAdd }${ts ? ': { onAdd: (title: string) => void }' : ''}) {
   const [title, setTitle] = useState('');
   function submit(event${ts ? ': FormEvent<HTMLFormElement>' : ''}) {
@@ -68,34 +115,51 @@ export function AddTaskForm({ onAdd }${ts ? ': { onAdd: (title: string) => void 
   return (
     <form className="task-form" onSubmit={submit}>
       <label className="sr-only" htmlFor="task-title">New task</label>
-      <div className="input-wrap"><span aria-hidden="true">+</span><input id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Add a task to your list..." /></div>
+      <div className="input-wrap"><span aria-hidden="true">+</span>${shadcn ? '<Input' : '<input'} className="task-input" id="task-title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="What would you like to do?" /></div>
       ${shadcn ? '<Button className="add-button" type="submit">Add task <span aria-hidden="true">↗</span></Button>' : '<button className="add-button" type="submit">Add task <span aria-hidden="true">↗</span></button>'}
     </form>
   );
 }
 `);
-  const toggle = (p) => put(p, `export function ToggleTaskButton({ title, completed, onToggle }${ts ? ': { title: string; completed: boolean; onToggle: () => void }' : ''}) {
-  return <button type="button" className="toggle" aria-pressed={completed} aria-label={(completed ? 'Mark incomplete: ' : 'Mark complete: ') + title} onClick={onToggle}>{completed ? 'Completed' : 'Mark complete'}</button>;
+  const toggle = (p) => put(p, `${shadcn ? `import { Button } from '@/${uiBase}/ui/button';\n` : ''}export function ToggleTaskButton({ title, completed, onToggle }${ts ? ': { title: string; completed: boolean; onToggle: () => void }' : ''}) {
+  return ${shadcn ? '<Button variant="outline" size="sm"' : '<button'} type="button" className="toggle" aria-pressed={completed} aria-label={(completed ? 'Mark incomplete: ' : 'Mark complete: ') + title} onClick={onToggle}>{completed ? 'Completed' : 'Mark complete'}${shadcn ? '</Button>' : '</button>'};
 }
 `);
   const list = (p, modelPath, togglePath) => put(p, `${ts ? `import type { Task } from '${rel(p, modelPath)}';\n` : ''}${togglePath ? `import { ToggleTaskButton } from '${rel(p, togglePath)}';\n` : ''}
+${shadcn && !togglePath ? `import { Button } from '@/${uiBase}/ui/button';\n` : ''}
 export function TaskList({ tasks, onToggle }${ts ? ': { tasks: Task[]; onToggle: (id: string) => void }' : ''}) {
   if (tasks.length === 0) return ${empty};
   return <ul className="task-list">{tasks.map((task) => <li key={task.id} className="task-row">
     <span className={task.completed ? 'task-title completed' : 'task-title'}>{task.title}</span>
-    ${togglePath ? '<ToggleTaskButton title={task.title} completed={task.completed} onToggle={() => onToggle(task.id)} />' : '<button type="button" className="toggle" aria-pressed={task.completed} aria-label={(task.completed ? \'Mark incomplete: \' : \'Mark complete: \') + task.title} onClick={() => onToggle(task.id)}>{task.completed ? \'Completed\' : \'Mark complete\'}</button>'}
+    ${togglePath ? '<ToggleTaskButton title={task.title} completed={task.completed} onToggle={() => onToggle(task.id)} />' : `${shadcn ? '<Button variant="outline" size="sm"' : '<button'} type="button" className="toggle" aria-pressed={task.completed} aria-label={(task.completed ? 'Mark incomplete: ' : 'Mark complete: ') + task.title} onClick={() => onToggle(task.id)}>{task.completed ? 'Completed' : 'Mark complete'}${shadcn ? '</Button>' : '</button>'}`}
   </li>)}</ul>;
 }
 `);
-  const basicApp = (p, hookPath, formPath, listPath) => put(p, `import { useTasks } from '${rel(p, hookPath)}';
+  const basicApp = (p, hookPath, formPath, listPath) => put(p, `${cardImport}${examplesImport}import { useTasks } from '${rel(p, hookPath)}';
 import { AddTaskForm } from '${rel(p, formPath)}';
 import { TaskList } from '${rel(p, listPath)}';
 
 export default function App() {
   const { tasks, addTask, changeTask } = useTasks();
-  return <div className="page-shell">${topbar}<main className="app">${hero}<section className="workspace" aria-label="Task list">${workspaceHeading}
-    <AddTaskForm onAdd={addTask} />${listHeading}<TaskList tasks={tasks} onToggle={changeTask} />
-  </section></main>${footer}</div>;
+  const taskCount = tasks.length;
+  const completedCount = tasks.filter((task) => task.completed).length;
+  return (
+    <div className="page-shell">
+      ${topbar}
+      <main className="app">
+        ${hero}
+        ${workspaceOpen}
+          ${workspaceHeading}
+          <AddTaskForm onAdd={addTask} />
+          <p className="task-form-hint">Add what’s on your mind. The rest can wait.</p>
+          ${listHeading}
+          <TaskList tasks={tasks} onToggle={changeTask} />
+        ${workspaceClose}
+      </main>
+      ${hasExamples ? '<TanStackExamples />' : ''}
+      ${footer}
+    </div>
+  );
 }
 `);
 
@@ -137,26 +201,35 @@ export function TaskItem({ task, action }${ts ? ': { task: Task; action: ReactNo
     put(entityIndex, `export { createTask, toggleTask${ts ? ', type Task' : ''} } from '${rel(entityIndex, m)}';\nexport { TaskItem } from '${rel(entityIndex, item)}';\n`);
     put(fi, `export { AddTaskForm } from '${rel(fi, f)}';\n`);
     put(ti, `export { ToggleTaskButton } from '${rel(ti, t)}';\n`);
-    put(card, `${ts ? "import type { ReactNode } from 'react';\n" : ''}export function TaskShell({ children }${ts ? ': { children: ReactNode }' : ''}) { return <div className="page-shell">${topbar}<main className="app">{children}</main>${footer}</div>; }\n`);
-    put(p, `import { useState } from 'react';
+    put(card, `${ts ? "import type { ReactNode } from 'react';\n" : ''}export function TaskShell({ children${hasExamples ? ', examples' : ''} }${ts ? `: { children: ReactNode${hasExamples ? '; examples: ReactNode' : ''} }` : ''}) { return <div className="page-shell">${topbar}<main className="app">{children}</main>${hasExamples ? '{examples}' : ''}${footer}</div>; }\n`);
+    put(p, `${cardImport}import { useState${ts && hasExamples ? ', type ReactNode' : ''} } from 'react';
 import { createTask, toggleTask, TaskItem${ts ? ', type Task' : ''} } from '${rel(p, entityIndex)}';
 import { AddTaskForm } from '${rel(p, fi)}';
 import { ToggleTaskButton } from '${rel(p, ti)}';
 import { TaskShell } from '${rel(p, card)}';
 
-export function TaskPage() {
+export function TaskPage(${hasExamples ? `{ examples }${ts ? ': { examples: ReactNode }' : ''}` : ''}) {
   const [tasks, setTasks] = useState${ts ? '<Task[]>' : ''}([]);
+  const taskCount = tasks.length;
+  const completedCount = tasks.filter((task) => task.completed).length;
   function addTask(title${ts ? ': string' : ''}) { setTasks((current) => [...current, createTask(title)]); }
   function changeTask(id${ts ? ': string' : ''}) { setTasks((current) => current.map((task) => task.id === id ? toggleTask(task) : task)); }
-  return <TaskShell>${hero}<section className="workspace" aria-label="Task list">${workspaceHeading}
-    <AddTaskForm onAdd={addTask} />${listHeading}
-    {tasks.length === 0 ? ${empty} : <ul className="task-list">{tasks.map((task) => <TaskItem key={task.id} task={task} action={<ToggleTaskButton title={task.title} completed={task.completed} onToggle={() => changeTask(task.id)} />} />)}</ul>}
-  </section>
-  </TaskShell>;
+  return (
+    <TaskShell${hasExamples ? ' examples={examples}' : ''}>
+      ${hero}
+      ${workspaceOpen}
+        ${workspaceHeading}
+        <AddTaskForm onAdd={addTask} />
+        <p className="task-form-hint">Add what’s on your mind. The rest can wait.</p>
+        ${listHeading}
+        {tasks.length === 0 ? ${empty} : <ul className="task-list">{tasks.map((task) => <TaskItem key={task.id} task={task} action={<ToggleTaskButton title={task.title} completed={task.completed} onToggle={() => changeTask(task.id)} />} />)}</ul>}
+      ${workspaceClose}
+    </TaskShell>
+  );
 }
 `);
     put(pi, `export { TaskPage } from '${rel(pi, p)}';\n`);
-    put(appPath, `import { TaskPage } from '${rel(appPath, pi)}';\nexport default function App() { return <TaskPage />; }\n`);
+    put(appPath, `${examplesImport}import { TaskPage } from '${rel(appPath, pi)}';\nexport default function App() { return <TaskPage${hasExamples ? ' examples={<TanStackExamples />}' : ''} />; }\n`);
   } else if (architecture === 'Atomic Design') {
     const m = file(['!tasks'], 'task', mod), h = file(['!tasks'], 'use tasks', mod);
     const atom = file(['!components', '!atoms'], 'task toggle');
@@ -178,20 +251,36 @@ export function TaskList({ tasks, onToggle }${ts ? ': { tasks: Task[]; onToggle:
   return <ul className="task-list">{tasks.map((task) => <TaskItem key={task.id} task={task} onToggle={onToggle} />)}</ul>;
 }
 `);
-    put(template, `${ts ? "import type { ReactNode } from 'react';\n" : ''}export function TaskTemplate({ form, list }${ts ? ': { form: ReactNode; list: ReactNode }' : ''}) {
-  return <div className="page-shell">${topbar}<main className="app">${hero}<section className="workspace" aria-label="Task list">${workspaceHeading}{form}${listHeading}{list}</section></main>${footer}</div>;
+    put(template, `${cardImport}${ts ? "import type { ReactNode } from 'react';\n" : ''}export function TaskTemplate({ form, list, taskCount, completedCount${hasExamples ? ', examples' : ''} }${ts ? `: { form: ReactNode; list: ReactNode; taskCount: number; completedCount: number${hasExamples ? '; examples: ReactNode' : ''} }` : ''}) {
+  return (
+    <div className="page-shell">
+      ${topbar}
+      <main className="app">
+        ${hero}
+        ${workspaceOpen}
+          ${workspaceHeading}
+          {form}
+          <p className="task-form-hint">Add what’s on your mind. The rest can wait.</p>
+          ${listHeading}
+          {list}
+        ${workspaceClose}
+      </main>
+      ${hasExamples ? '{examples}' : ''}
+      ${footer}
+    </div>
+  );
 }
 `);
-    put(page, `import { useTasks } from '${rel(page, h)}';
+    put(page, `${hasExamples && ts ? "import type { ReactNode } from 'react';\n" : ''}import { useTasks } from '${rel(page, h)}';
 import { AddTaskForm } from '${rel(page, f)}';
 import { TaskList } from '${rel(page, l)}';
 import { TaskTemplate } from '${rel(page, template)}';
-export function TaskPage() {
+export function TaskPage(${hasExamples ? `{ examples }${ts ? ': { examples: ReactNode }' : ''}` : ''}) {
   const { tasks, addTask, changeTask } = useTasks();
-  return <TaskTemplate form={<AddTaskForm onAdd={addTask} />} list={<TaskList tasks={tasks} onToggle={changeTask} />} />;
+  return <TaskTemplate form={<AddTaskForm onAdd={addTask} />} list={<TaskList tasks={tasks} onToggle={changeTask} />} taskCount={tasks.length} completedCount={tasks.filter((task) => task.completed).length}${hasExamples ? ' examples={examples}' : ''} />;
 }
 `);
-    put(appPath, `import { TaskPage } from '${rel(appPath, page)}';\nexport default function App() { return <TaskPage />; }\n`);
+    put(appPath, `${examplesImport}import { TaskPage } from '${rel(appPath, page)}';\nexport default function App() { return <TaskPage${hasExamples ? ' examples={<TanStackExamples />}' : ''} />; }\n`);
   } else throw new Error(`Unknown architecture: ${architecture}`);
   return { files, appPath: appPath.slice(4) };
 }
