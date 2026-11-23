@@ -140,19 +140,26 @@ async function main() {
     message: 'Do you want Graphify?',
     choices: [{ name: 'Yes', value: true }, { name: 'No', value: false }],
   });
+  const testing = await select({
+    message: 'Which testing tools do you want?',
+    choices: [
+      { name: 'Vitest + React Testing Library (Recommended)', value: 'Vitest' },
+      { name: 'No testing tools', value: 'None' },
+    ],
+  });
   const tanstack = await checkbox({
     message: 'Which TanStack tools do you want to use?',
     choices: tanstackTools,
     instructions: 'Use space to select, enter to continue.',
   });
 
-  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\nTanStack: ${tanstack.length ? tanstack.join(', ') : 'None'}\n`);
+  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\nTesting: ${testing === 'Vitest' ? 'Vitest + React Testing Library' : 'None'}\nTanStack: ${tanstack.length ? tanstack.join(', ') : 'None'}\n`);
   if (!await confirm({ message: 'Create this project?', default: true })) {
     console.log('Project creation cancelled.');
     return;
   }
 
-  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify, tanstack });
+  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify, testing, tanstack });
   console.log(`\nProject created successfully. Next steps:\n\n${useExistingDirectory ? '' : `  cd ${projectName}\n`}  npm install\n  npm run dev\n`);
 }
 

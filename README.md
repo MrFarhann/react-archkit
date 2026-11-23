@@ -43,7 +43,7 @@ The starter is a small task app: you can add tasks, view the list, and toggle co
 1. **Name your project.** Pass the name as an argument or omit it to be prompted. Use a lowercase npm-compatible name that is also a safe single folder name, such as `my-app`.
 2. **Choose PWA support.** If enabled, choose a service worker strategy and update behavior.
 3. **Choose your foundation.** Select an architecture, a file and folder naming convention, and TypeScript or JavaScript.
-4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter or no formatter and optional integrations. In the TanStack checkbox menu, press Space to select each tool and Enter to continue; selecting none is fine.
+4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter, testing tools, and optional integrations. In the TanStack checkbox menu, press Space to select each tool and Enter to continue; selecting none is fine.
 5. **Review and create.** Confirm the printed choices and destination. React ArchKit creates the files; you install dependencies and start the dev server.
 
 For a named project, the destination must not already exist. When using `.`, the current directory must be empty. Existing files are never overwritten. Press `Ctrl+C` to cancel. For command-line help, use `npx create-react-archkit@latest --help`, or `node bin/cli.js --help` from a local checkout.
@@ -68,6 +68,7 @@ All five starters provide the same task interactions. Each generated README give
 | **Naming** | `kebab-case`, `camelCase`, `PascalCase`, `snake_case`, or `UPPER_CASE` |
 | **Styling** | Plain CSS, Tailwind CSS v4, or Tailwind CSS with shadcn/ui |
 | **Formatting** | Biome, Prettier, or no formatter |
+| **Testing** | Vitest and React Testing Library, or no testing tools |
 | **PWA** | Optional service worker and web app manifest |
 | **Integrations** | Optional Axios client, Graphify configuration, and TanStack tools |
 
@@ -78,6 +79,16 @@ The shadcn/ui option requires Tailwind and includes configuration and working Bu
 Choosing Axios adds a starter HTTP client configured with `/api` and a timeout; configure it for your API before use. Choosing Graphify adds configuration and a `graphify:build` script. Graphify is a separate Python tool, not an npm dependency: the generated README provides installation instructions. The script extracts a code-only graph into `graphify-out/` and does not generate a report.
 
 Generated projects also support `pnpm install` and `pnpm dev` with pnpm 10.25 or newer. Their pnpm configuration permits esbuild's install script; other dependencies requiring build scripts still need review.
+
+## Testing generated projects
+
+The default testing option sets up [Vitest](https://vitest.dev/), [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/), user-event, jest-dom, and jsdom as development dependencies. It adds a component test that creates and completes a task. After installing the generated project's dependencies, run `npm test` for watch mode or `npm run test:run` for a single run. Select **No testing tools** to create the project without testing dependencies or configuration.
+
+With testing enabled, use Node.js 20.19 or newer in the 20.x line, 22.12 or newer in the 22.x line, or 24 or newer. Node.js 23 is not supported by Vitest. The generator's own Node.js requirement is unchanged.
+
+The generated `package.json` includes a targeted npm override that keeps `@vitejs/devtools-vitest`'s optional Vitest peer aligned with the chosen Vitest version when using npm 10 or 11. If you upgrade Vitest, update the override to the same version. pnpm does not use npm's `overrides` field.
+
+The starter test runs in jsdom rather than a real browser. It exercises the task app independently of routing; when other TanStack examples are selected, those examples are mocked so they can be tested separately. Extend the starter test and add browser tests if your project needs them.
 
 ## TanStack tools
 

@@ -28,6 +28,7 @@ async function runInterview(formatter, create, { pwa = true, strategy = 'generat
     ...(formatter === 'Prettier' ? [['Do you want esbuild as a direct dependency?', '\r']] : []),
     ['Do you want Axios?', '\r'],
     ['Do you want Graphify?', create ? '\r' : '\x1b[B\r'],
+    ['Which testing tools do you want?', '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', '\r'],
     ['Create this project?', create ? '\r' : 'n\r'],
   ];

@@ -2,6 +2,7 @@ import { deflateSync } from 'node:zlib';
 import { applyPwa } from './pwa.js';
 import { applyTanstackRouter } from './tanstack-router.js';
 import { applyTanstackExamples } from './tanstack-examples.js';
+import { applyTesting } from './testing.js';
 
 const versions = { pwa: '1.2.0', biome: '2.3.8', prettier: '3.6.2', esbuild: '0.25.12', axios: '1.13.2' };
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
@@ -49,7 +50,7 @@ function sampleName(value, convention) {
 }
 
 /** Apply optional integrations to the common project and document its actual files. */
-export function applyOptions(files, options) {
+export function applyOptions(files, options, appPath) {
   const { projectName, language, architecture, naming, pwa, formatter, esbuild, axios, graphify } = options;
   const pkg = JSON.parse(files['package.json']);
   if (formatter === 'Biome') {
@@ -86,6 +87,7 @@ export function applyOptions(files, options) {
   const tanstack = options.tanstack ?? [];
   if (tanstack.includes('router')) applyTanstackRouter(files, pkg, options);
   if (tanstack.some(tool => tool !== 'router')) applyTanstackExamples(files, pkg, options);
+  if (options.testing === 'Vitest') applyTesting(files, pkg, options, appPath);
   files['package.json'] = json(pkg);
   const formatterDocs = formatter === 'None' ? '- Formatting: none selected. No formatter or formatter scripts are configured.\n' : `- Formatting: ${formatter}; run \`npm run format\`${formatter === 'Biome' ? ' and `npm run lint`' : ' or `npm run format:check`'}.\n`;
   files['README.md'] += `\n## Optional integrations\n\n${pwa ? `- PWA: \`${options.pwaStrategy ?? 'generateSW'}\` strategy; update mode: \`${options.pwaUpdate ?? 'prompt'}\`. The production build generates a manifest and service worker. Test with \`npm run build\` and \`npm run preview\` on localhost or HTTPS. ${options.pwaStrategy === 'injectManifest' ? 'Customize \`src/sw.' + (language === 'TypeScript' ? 'ts' : 'js') + '\` for additional cache rules. ' : ''}${options.pwaUpdate === 'autoUpdate' ? 'Automatic reload can discard unsaved form data. ' : 'When an update is ready, the user can choose Update now or Later. '}Only application assets are precached by default; configure runtime caching explicitly for other resources.\n` : ''}${formatterDocs}${esbuild ? '- esbuild is installed directly and configured as the Vite production minifier. Vite also uses esbuild internally regardless of this option.\n' : ''}${axios ? `- Axios: configure and import the client in \`${clientPath}\` when connecting an API. The task sample itself works offline.\n` : ''}${graphify ? '- Graphify uses Python, not npm. Install Python 3.10+ and `pipx install graphifyy==0.9.88` (or `uv tool install graphifyy==0.9.88`), then run `npm run graphify:build`. This extracts a code-only graph into `graphify-out/`; it does not generate a report. The generated launcher disables Graphify’s automatic global skill refresh.\n' : ''}\nSee [PROJECT_STRUCTURE.md](PROJECT_STRUCTURE.md) for the generated files, packages, and architecture.\n`;
@@ -103,6 +105,9 @@ export function applyOptions(files, options) {
     tailwindcss: 'Generates utility CSS.', '@tailwindcss/vite': 'Integrates Tailwind CSS with Vite.',
     'vite-plugin-pwa': 'Generates the manifest and service worker.', 'workbox-window': 'Registers the service worker in the browser.', 'workbox-core': 'Provides service worker lifecycle helpers.', 'workbox-precaching': 'Precaches versioned application assets.', 'workbox-routing': 'Routes offline navigation requests.', '@biomejs/biome': 'Formats and lints source code.',
     prettier: 'Formats project files.', esbuild: 'Provides the explicitly selected Vite minifier.',
+    vitest: 'Runs unit and component tests.', jsdom: 'Provides a browser-like DOM for tests.',
+    '@testing-library/react': 'Renders React components for behavior tests.', '@testing-library/dom': 'Finds DOM elements by accessible roles and labels.',
+    '@testing-library/user-event': 'Simulates user interaction in tests.', '@testing-library/jest-dom': 'Adds DOM-specific assertions.',
     '@tanstack/react-router': 'Client-side routing.', '@tanstack/router-plugin': 'Generates the file-based route tree.',
     '@tanstack/react-query': 'Asynchronous state and caching.', '@tanstack/react-table': 'Headless tables.', '@tanstack/charts': 'Composable chart visualizations.',
     '@tanstack/react-form': 'Form state and validation.', '@tanstack/react-virtual': 'Virtualized lists.', '@tanstack/react-store': 'Reactive shared state.'
@@ -110,5 +115,5 @@ export function applyOptions(files, options) {
   const describe = ([name, version]) => `- \`${name}@${version}\` — ${purpose[name] || 'Project dependency.'}`;
   const deps = Object.entries(pkg.dependencies).map(describe).join('\n');
   const devDeps = Object.entries(pkg.devDependencies).map(describe).join('\n');
-  files['PROJECT_STRUCTURE.md'] = `# Project structure and packages\n\n## Architecture\n\nThis project uses **${architecture}** and **${language}**. See README.md for guidance on extending this architecture. Names in the sample follow **${naming}**; fixed tool and integration paths are documented there.\n\n## Generated files\n\n${paths.map(file => `- \`${file}\``).join('\n')}\n\n## Runtime dependencies\n\n${deps}\n\n## Development dependencies\n\n${devDeps}\n\n## Integrations\n\n- PWA: ${pwa ? `enabled; strategy: ${options.pwaStrategy ?? 'generateSW'}; update mode: ${options.pwaUpdate ?? 'prompt'}` : 'disabled'}\n- Formatter: ${formatter}\n- Direct esbuild: ${esbuild ? 'enabled' : 'disabled'} (Vite uses esbuild internally regardless)\n- Axios: ${axios ? `enabled; client at \`${clientPath}\`` : 'disabled'}\n- Graphify: ${graphify ? 'configured; separate Python installation required' : 'disabled'}\n- TanStack: ${tanstack.length ? tanstack.join(', ') : 'none'}\n\n## Commands\n\n${Object.entries(pkg.scripts).map(([key, value]) => `- \`npm run ${key}\` — \`${value}\``).join('\n')}\n`;
+  files['PROJECT_STRUCTURE.md'] = `# Project structure and packages\n\n## Architecture\n\nThis project uses **${architecture}** and **${language}**. See README.md for guidance on extending this architecture. Names in the sample follow **${naming}**; fixed tool and integration paths are documented there.\n\n## Generated files\n\n${paths.map(file => `- \`${file}\``).join('\n')}\n\n## Runtime dependencies\n\n${deps}\n\n## Development dependencies\n\n${devDeps}\n\n## Integrations\n\n- PWA: ${pwa ? `enabled; strategy: ${options.pwaStrategy ?? 'generateSW'}; update mode: ${options.pwaUpdate ?? 'prompt'}` : 'disabled'}\n- Formatter: ${formatter}\n- Testing: ${options.testing === 'Vitest' ? 'Vitest and React Testing Library' : 'none'}\n- Direct esbuild: ${esbuild ? 'enabled' : 'disabled'} (Vite uses esbuild internally regardless)\n- Axios: ${axios ? `enabled; client at \`${clientPath}\`` : 'disabled'}\n- Graphify: ${graphify ? 'configured; separate Python installation required' : 'disabled'}\n- TanStack: ${tanstack.length ? tanstack.join(', ') : 'none'}\n\n## Commands\n\n${Object.entries(pkg.scripts).map(([key, value]) => `- \`npm run ${key}\` — \`${value}\``).join('\n')}\n`;
 }

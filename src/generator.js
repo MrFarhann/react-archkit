@@ -34,7 +34,7 @@ function sharedFiles(options, appPath) {
   const uiDir = fsd ? 'shared/ui' : 'components/ui';
   const libDir = fsd ? 'shared/lib' : 'lib';
   const dependencies = { react: '19.2.0', 'react-dom': '19.2.0' };
-  const devDependencies = { '@vitejs/plugin-react': '5.1.2', vite: '7.3.1' };
+  const devDependencies = { '@vitejs/plugin-react': '5.1.2', vite: '7.3.8' };
   if (ts) Object.assign(devDependencies, { '@types/react': '19.2.7', '@types/react-dom': '19.2.3', typescript: '5.9.3' });
   if (tailwind) Object.assign(devDependencies, { '@tailwindcss/vite': '4.1.18', tailwindcss: '4.1.18' });
   if (shadcn) Object.assign(dependencies, { '@radix-ui/react-slot': '1.2.4', 'class-variance-authority': '0.7.1', clsx: '2.1.1', 'tailwind-merge': '3.4.0', 'lucide-react': '0.562.0' });
@@ -66,20 +66,21 @@ function sharedFiles(options, appPath) {
 }
 
 export async function generateProject(options) {
-  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, tanstack: [], ...options };
+  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, testing: 'None', tanstack: [], ...options };
   options.pwaStrategy ??= 'generateSW';
   options.pwaUpdate ??= 'prompt';
   const { projectName, targetDir, architecture, naming, language, tailwind, shadcn } = options;
   validateProjectName(projectName);
   if (!targetDir || !architectures.includes(architecture) || !namings.includes(naming) || !['TypeScript', 'JavaScript'].includes(language) || typeof tailwind !== 'boolean' || typeof shadcn !== 'boolean' || (shadcn && !tailwind)) throw new Error('Invalid project options.');
   if (typeof options.pwa !== 'boolean' || !['generateSW', 'injectManifest'].includes(options.pwaStrategy) || !['prompt', 'autoUpdate'].includes(options.pwaUpdate) || !['Biome', 'Prettier', 'None'].includes(options.formatter) || typeof options.esbuild !== 'boolean' || typeof options.axios !== 'boolean' || typeof options.graphify !== 'boolean' || (options.formatter !== 'Prettier' && options.esbuild)) throw new Error('Invalid integration options.');
+  if (!['Vitest', 'None'].includes(options.testing)) throw new Error('Invalid testing selection.');
   const validTanstack = new Set(tanstackTools.map(({ value }) => value));
   if (!Array.isArray(options.tanstack) || options.tanstack.some(tool => !validTanstack.has(tool)) || new Set(options.tanstack).size !== options.tanstack.length) throw new Error('Invalid TanStack tools selection.');
   const target = path.resolve(targetDir);
   if (options.useExistingDirectory !== undefined && typeof options.useExistingDirectory !== 'boolean') throw new Error('Invalid project options.');
   const { files: architectureSources, appPath } = architectureFiles(options);
   const files = { ...sharedFiles(options, appPath), ...architectureSources };
-  applyOptions(files, options);
+  applyOptions(files, options, appPath);
   const createdFiles = [];
   const createdDirs = [];
   try {

@@ -116,6 +116,7 @@ async function runCheckboxInterview(cwd, cliPath, keys) {
     ['Which formatter do you want?', '\r'],
     ['Do you want Axios?', '\x1b[B\r'],
     ['Do you want Graphify?', '\x1b[B\r'],
+    ['Which testing tools do you want?', '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', keys],
     ['Create this project?', '\r'],
   ]

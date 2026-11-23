@@ -80,6 +80,7 @@ test('CLI selects no formatter, skips esbuild and builds a project with Router a
     ['Which formatter do you want?', '\x1b[B\x1b[B\r'],
     ['Do you want Axios?', '\x1b[B\r'],
     ['Do you want Graphify?', '\x1b[B\r'],
+    ['Which testing tools do you want?', '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', ' \x1b[B \r'],
     ['Create this project?', '\r'],
   ];
