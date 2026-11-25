@@ -3,6 +3,8 @@ import { applyPwa } from './pwa.js';
 import { applyTanstackRouter } from './tanstack-router.js';
 import { applyTanstackExamples } from './tanstack-examples.js';
 import { applyTesting } from './testing.js';
+import { applyStateManagement } from './state-management.js';
+import { applyFormManagement } from './form-management.js';
 
 const versions = { pwa: '1.2.0', biome: '2.3.8', prettier: '3.6.2', esbuild: '0.25.12', axios: '1.13.2' };
 const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
@@ -87,6 +89,8 @@ export function applyOptions(files, options, appPath) {
   const tanstack = options.tanstack ?? [];
   if (tanstack.includes('router')) applyTanstackRouter(files, pkg, options);
   if (tanstack.some(tool => tool !== 'router')) applyTanstackExamples(files, pkg, options);
+  applyStateManagement(files, pkg, options);
+  applyFormManagement(files, pkg, options);
   if (options.testing === 'Vitest') applyTesting(files, pkg, options, appPath);
   files['package.json'] = json(pkg);
   const formatterDocs = formatter === 'None' ? '- Formatting: none selected. No formatter or formatter scripts are configured.\n' : `- Formatting: ${formatter}; run \`npm run format\`${formatter === 'Biome' ? ' and `npm run lint`' : ' or `npm run format:check`'}.\n`;
@@ -108,6 +112,8 @@ export function applyOptions(files, options, appPath) {
     vitest: 'Runs unit and component tests.', jsdom: 'Provides a browser-like DOM for tests.',
     '@testing-library/react': 'Renders React components for behavior tests.', '@testing-library/dom': 'Finds DOM elements by accessible roles and labels.',
     '@testing-library/user-event': 'Simulates user interaction in tests.', '@testing-library/jest-dom': 'Adds DOM-specific assertions.',
+    zustand: 'Provides a shared React state store.', '@reduxjs/toolkit': 'Creates Redux stores and slices.', 'react-redux': 'Connects Redux stores to React.', rosma: 'Provides an observable shared state for React.',
+    'react-hook-form': 'Manages React forms.', formik: 'Manages React forms.', zod: 'Validates data with schemas.', '@hookform/resolvers': 'Connects React Hook Form to schema validators.',
     '@tanstack/react-router': 'Client-side routing.', '@tanstack/router-plugin': 'Generates the file-based route tree.',
     '@tanstack/react-query': 'Asynchronous state and caching.', '@tanstack/react-table': 'Headless tables.', '@tanstack/charts': 'Composable chart visualizations.',
     '@tanstack/react-form': 'Form state and validation.', '@tanstack/react-virtual': 'Virtualized lists.', '@tanstack/react-store': 'Reactive shared state.'
@@ -116,4 +122,6 @@ export function applyOptions(files, options, appPath) {
   const deps = Object.entries(pkg.dependencies).map(describe).join('\n');
   const devDeps = Object.entries(pkg.devDependencies).map(describe).join('\n');
   files['PROJECT_STRUCTURE.md'] = `# Project structure and packages\n\n## Architecture\n\nThis project uses **${architecture}** and **${language}**. See README.md for guidance on extending this architecture. Names in the sample follow **${naming}**; fixed tool and integration paths are documented there.\n\n## Generated files\n\n${paths.map(file => `- \`${file}\``).join('\n')}\n\n## Runtime dependencies\n\n${deps}\n\n## Development dependencies\n\n${devDeps}\n\n## Integrations\n\n- PWA: ${pwa ? `enabled; strategy: ${options.pwaStrategy ?? 'generateSW'}; update mode: ${options.pwaUpdate ?? 'prompt'}` : 'disabled'}\n- Formatter: ${formatter}\n- Testing: ${options.testing === 'Vitest' ? 'Vitest and React Testing Library' : 'none'}\n- Direct esbuild: ${esbuild ? 'enabled' : 'disabled'} (Vite uses esbuild internally regardless)\n- Axios: ${axios ? `enabled; client at \`${clientPath}\`` : 'disabled'}\n- Graphify: ${graphify ? 'configured; separate Python installation required' : 'disabled'}\n- TanStack: ${tanstack.length ? tanstack.join(', ') : 'none'}\n\n## Commands\n\n${Object.entries(pkg.scripts).map(([key, value]) => `- \`npm run ${key}\` — \`${value}\``).join('\n')}\n`;
+  files['PROJECT_STRUCTURE.md'] = files['PROJECT_STRUCTURE.md'].replace('\n- TanStack:', `\n- State management: ${options.tanstack.includes('store') ? 'TanStack Store' : options.stateManagement}\n- TanStack:`);
+  files['PROJECT_STRUCTURE.md'] = files['PROJECT_STRUCTURE.md'].replace('\n- TanStack:', `\n- Form management: ${tanstack.includes('form') ? 'TanStack Form' : options.formManagement}\n- Zod validation: ${options.zod ? 'enabled' : 'disabled'}\n- TanStack:`);
 }

@@ -66,7 +66,7 @@ function sharedFiles(options, appPath) {
 }
 
 export async function generateProject(options) {
-  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, testing: 'None', tanstack: [], ...options };
+  options = { pwa: false, pwaStrategy: 'generateSW', pwaUpdate: 'prompt', formatter: 'Prettier', esbuild: false, axios: false, graphify: false, testing: 'None', tanstack: [], stateManagement: 'none', formManagement: 'none', zod: false, ...options };
   options.pwaStrategy ??= 'generateSW';
   options.pwaUpdate ??= 'prompt';
   const { projectName, targetDir, architecture, naming, language, tailwind, shadcn } = options;
@@ -76,6 +76,8 @@ export async function generateProject(options) {
   if (!['Vitest', 'None'].includes(options.testing)) throw new Error('Invalid testing selection.');
   const validTanstack = new Set(tanstackTools.map(({ value }) => value));
   if (!Array.isArray(options.tanstack) || options.tanstack.some(tool => !validTanstack.has(tool)) || new Set(options.tanstack).size !== options.tanstack.length) throw new Error('Invalid TanStack tools selection.');
+  if (!['none', 'zustand', 'redux-toolkit', 'rosma'].includes(options.stateManagement) || (options.tanstack.includes('store') && options.stateManagement !== 'none')) throw new Error('Invalid state management selection. TanStack Store cannot be combined with another state management option.');
+  if (!['none', 'react-hook-form', 'formik'].includes(options.formManagement) || typeof options.zod !== 'boolean' || (options.tanstack.includes('form') && options.formManagement !== 'none')) throw new Error('Invalid form management or Zod selection. TanStack Form cannot be combined with another form management option.');
   const target = path.resolve(targetDir);
   if (options.useExistingDirectory !== undefined && typeof options.useExistingDirectory !== 'boolean') throw new Error('Invalid project options.');
   const { files: architectureSources, appPath } = architectureFiles(options);

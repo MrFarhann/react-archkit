@@ -101,6 +101,9 @@ async function runInterview(cwd, testingChoice) {
     ['Do you want Graphify?', '\x1b[B\r'],
     ['Which testing tools do you want?', testingChoice === 'Vitest' ? '\r' : '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', '\r'],
+    ['Which form management library do you want?', '\r'],
+    ['Do you want Zod schema validation?', '\r'],
+    ['Which state management library do you want?', '\r'],
     ['Create this project?', '\r'],
   ];
   const child = spawn(process.execPath, [cli, 'example-app'], {

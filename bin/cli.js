@@ -152,14 +152,41 @@ async function main() {
     choices: tanstackTools,
     instructions: 'Use space to select, enter to continue.',
   });
+  const formManagement = tanstack.includes('form') ? 'none' : await select({
+    message: 'Which form management library do you want?',
+    choices: [
+      { name: 'No form library', value: 'none' },
+      { name: 'React Hook Form', value: 'react-hook-form' },
+      { name: 'Formik', value: 'formik' },
+    ],
+  });
+  const zod = await select({
+    message: 'Do you want Zod schema validation?',
+    choices: [{ name: 'No', value: false }, { name: 'Yes', value: true }],
+  });
+  const formManagementLabel = tanstack.includes('form') ? 'TanStack Form' : {
+    none: 'None', 'react-hook-form': 'React Hook Form', formik: 'Formik',
+  }[formManagement];
+  const stateManagement = tanstack.includes('store') ? 'none' : await select({
+    message: 'Which state management library do you want?',
+    choices: [
+      { name: 'No state management', value: 'none' },
+      { name: 'Zustand', value: 'zustand' },
+      { name: 'Redux Toolkit', value: 'redux-toolkit' },
+      { name: 'Rosma', value: 'rosma' },
+    ],
+  });
+  const stateManagementLabel = tanstack.includes('store') ? 'TanStack Store' : {
+    none: 'None', zustand: 'Zustand', 'redux-toolkit': 'Redux Toolkit', rosma: 'Rosma',
+  }[stateManagement];
 
-  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\nTesting: ${testing === 'Vitest' ? 'Vitest + React Testing Library' : 'None'}\nTanStack: ${tanstack.length ? tanstack.join(', ') : 'None'}\n`);
+  console.log(`\nProject: ${projectName}\nDestination: ${targetDir}\nPWA: ${pwa ? 'Yes' : 'No'}${pwa ? `\nService worker strategy: ${pwaStrategy}\nPWA updates: ${pwaUpdate}` : ''}\nArchitecture: ${architecture}\nNaming: ${naming}\nLanguage: ${language}\nTailwind CSS: ${tailwind ? 'Yes' : 'No'}\nshadcn/ui: ${shadcn ? 'Yes' : 'No'}\nFormatter: ${formatter}\nDirect esbuild dependency: ${esbuild ? 'Yes' : 'No'}\nAxios: ${axios ? 'Yes' : 'No'}\nGraphify: ${graphify ? 'Yes' : 'No'}\nTesting: ${testing === 'Vitest' ? 'Vitest + React Testing Library' : 'None'}\nTanStack: ${tanstack.length ? tanstack.join(', ') : 'None'}\nForm management: ${formManagementLabel}\nZod: ${zod ? 'Yes' : 'No'}\nState management: ${stateManagementLabel}\n`);
   if (!await confirm({ message: 'Create this project?', default: true })) {
     console.log('Project creation cancelled.');
     return;
   }
 
-  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify, testing, tanstack });
+  await generateProject({ projectName, targetDir, useExistingDirectory, pwa, pwaStrategy, pwaUpdate, architecture, naming, language, tailwind, shadcn, formatter, esbuild, axios, graphify, testing, tanstack, formManagement, zod, stateManagement });
   console.log(`\nProject created successfully. Next steps:\n\n${useExistingDirectory ? '' : `  cd ${projectName}\n`}  npm install\n  npm run dev\n`);
 }
 

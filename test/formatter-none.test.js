@@ -82,6 +82,9 @@ test('CLI selects no formatter, skips esbuild and builds a project with Router a
     ['Do you want Graphify?', '\x1b[B\r'],
     ['Which testing tools do you want?', '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', ' \x1b[B \r'],
+    ['Which form management library do you want?', '\r'],
+    ['Do you want Zod schema validation?', '\r'],
+    ['Which state management library do you want?', '\r'],
     ['Create this project?', '\r'],
   ];
   const child = spawn(process.execPath, [cli, 'example-app'], {

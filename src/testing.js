@@ -4,6 +4,7 @@ export function applyTesting(files, pkg, options, appPath) {
   const ext = ts ? 'tsx' : 'jsx';
   const setupExt = ts ? 'ts' : 'js';
   const hasExamples = options.tanstack.some(tool => tool !== 'router');
+  const hasStateExample = options.stateManagement !== 'none';
 
   // Vitest 4 excludes Node 23; retain Vite's minimums for supported versions.
   pkg.engines.node = '^20.19.0 || ^22.12.0 || >=24.0.0';
@@ -40,11 +41,14 @@ afterEach(cleanup);
   const appImport = `@/${appPath.replace(/\.(?:tsx|jsx)$/, '')}`;
   files[`src/test/app.test.${ext}`] = `import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it${hasExamples ? ', vi' : ''} } from 'vitest';
+import { describe, expect, it${hasExamples || hasStateExample ? ', vi' : ''} } from 'vitest';
 import App from '${appImport}';
 ${hasExamples ? `
 // Keep this test focused on the task app; test the optional examples separately.
 vi.mock('@/tanstack-examples', () => ({ TanStackExamples: () => null }));
+` : ''}${hasStateExample ? `
+// The starter test exercises the task list independently of the shared-state example.
+vi.mock('@/state/state-example', () => ({ StateExample: () => null }));
 ` : ''}
 describe('task list', () => {
   it('adds and completes a task', async () => {
@@ -62,4 +66,5 @@ describe('task list', () => {
 });
 `;
   files['README.md'] += `\n## Testing\n\nTesting requires Node.js 20.19 or newer in the 20.x line, 22.12 or newer in the 22.x line, or 24 or newer. Node.js 23 is not supported by Vitest.\n\nRun \`npm test\` for Vitest's watch mode or \`npm run test:run\` for a single run (for example, in CI). The starter component test uses React Testing Library and jsdom to add and complete a task. It renders the task app independently of routing${hasExamples ? ' and mocks the optional TanStack examples; test those examples separately' : ''}. jsdom simulates the DOM and does not replace testing in a real browser. Extend the test in \`src/test/app.test.${ext}\` or add your own tests as the application grows.\n\nThe npm override for \`@vitejs/devtools-vitest\` keeps its optional Vitest peer aligned for npm 10/11. When upgrading Vitest, update the override to the same version. pnpm does not use npm's \`overrides\` field.\n`;
+  if (hasStateExample) files['README.md'] += '\nThe task-list test mocks the separate state-management example; add dedicated tests for its store and UI.\n';
 }

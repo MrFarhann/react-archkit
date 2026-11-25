@@ -58,6 +58,7 @@ function TableExample() {
 
   if (selected.includes('form')) {
     imports.push("import { useState } from 'react';", "import { useForm } from '@tanstack/react-form';");
+    if (options.zod) imports.push("import { nameSchema } from '@/forms/schema';");
     blocks.push(`function FormExample() {
   const [message, setMessage] = useState('');
   const form = useForm({
@@ -65,11 +66,11 @@ function TableExample() {
     onSubmit: ({ value }) => { setMessage('Hello, ' + value.name.trim() + '!'); },
   });
   return <form className="tanstack-form" onSubmit={(event) => { event.preventDefault(); void form.handleSubmit(); }}>
-    <form.Field name="name" validators={{ onChange: ({ value }) => value.trim() ? undefined : 'Please enter a name.' }}>
+    <form.Field name="name" validators={{ onChange: ${options.zod ? 'nameSchema' : "({ value }) => value.trim() ? undefined : 'Please enter a name.'"} }}>
       {(field) => <>
         <div className="tanstack-form-field"><label htmlFor="tanstack-example-name">Your name</label><${inputTag} className="tanstack-input" id="tanstack-example-name" name={field.name} placeholder="Enter your name" value={field.state.value} onBlur={field.handleBlur} onChange={(event) => { field.handleChange(event.target.value); setMessage(''); }} aria-invalid={field.state.meta.isTouched && field.state.meta.errors.length > 0} aria-describedby={field.state.meta.isTouched && field.state.meta.errors.length > 0 ? 'tanstack-example-name-error' : undefined} /></div>
         <${buttonTag} className="tanstack-action" type="submit">Say hello <span aria-hidden="true">↗</span></${buttonTag}>
-        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && <span className="tanstack-field-error" id="tanstack-example-name-error" role="alert">{field.state.meta.errors.join(', ')}</span>}
+        {field.state.meta.isTouched && field.state.meta.errors.length > 0 && <span className="tanstack-field-error" id="tanstack-example-name-error" role="alert">{${options.zod ? "field.state.meta.errors.map((error) => typeof error === 'string' ? error : error?.message ?? '').join(', ')" : "field.state.meta.errors.join(', ')"}}</span>}
       </>}
     </form.Field>
     {message && <p className="tanstack-form-message" role="status">{message}</p>}

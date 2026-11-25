@@ -43,7 +43,7 @@ The starter is a small task app: you can add tasks, view the list, and toggle co
 1. **Name your project.** Pass the name as an argument or omit it to be prompted. Use a lowercase npm-compatible name that is also a safe single folder name, such as `my-app`.
 2. **Choose PWA support.** If enabled, choose a service worker strategy and update behavior.
 3. **Choose your foundation.** Select an architecture, a file and folder naming convention, and TypeScript or JavaScript.
-4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter, testing tools, and optional integrations. In the TanStack checkbox menu, press Space to select each tool and Enter to continue; selecting none is fine.
+4. **Choose your tools.** Select plain CSS or Tailwind CSS, optionally add shadcn/ui, then choose a formatter, testing tools, and optional integrations. In the TanStack checkbox menu, press Space to select each tool and Enter to continue; selecting none is fine. You can then choose form tools, Zod, and a state-management library. The separate form and state questions are skipped when TanStack Form and Store are selected, respectively.
 5. **Review and create.** Confirm the printed choices and destination. React ArchKit creates the files; you install dependencies and start the dev server.
 
 For a named project, the destination must not already exist. When using `.`, the current directory must be empty. Existing files are never overwritten. Press `Ctrl+C` to cancel. For command-line help, use `npx create-react-archkit@latest --help`, or `node bin/cli.js --help` from a local checkout.
@@ -69,6 +69,8 @@ All five starters provide the same task interactions. Each generated README give
 | **Styling** | Plain CSS, Tailwind CSS v4, or Tailwind CSS with shadcn/ui |
 | **Formatting** | Biome, Prettier, or no formatter |
 | **Testing** | Vitest and React Testing Library, or no testing tools |
+| **Forms** | React Hook Form, Formik, TanStack Form, or none; optional Zod schema validation |
+| **State management** | Zustand, Redux Toolkit, Rosma, TanStack Store, or none |
 | **PWA** | Optional service worker and web app manifest |
 | **Integrations** | Optional Axios client, Graphify configuration, and TanStack tools |
 
@@ -79,6 +81,18 @@ The shadcn/ui option requires Tailwind and includes configuration and working Bu
 Choosing Axios adds a starter HTTP client configured with `/api` and a timeout; configure it for your API before use. Choosing Graphify adds configuration and a `graphify:build` script. Graphify is a separate Python tool, not an npm dependency: the generated README provides installation instructions. The script extracts a code-only graph into `graphify-out/` and does not generate a report.
 
 Generated projects also support `pnpm install` and `pnpm dev` with pnpm 10.25 or newer. Their pnpm configuration permits esbuild's install script; other dependencies requiring build scripts still need review.
+
+## State management
+
+Choose [Zustand](https://zustand.docs.pmnd.rs/), [Redux Toolkit](https://redux-toolkit.js.org/), [Rosma](https://www.rosma.dev/), or no state-management library. The selected option adds the required dependencies, a configured store under `src/state/`, and a small shared-counter example. Redux Toolkit also sets up the React Redux provider. The task list retains its own local React state; use or adapt the store for your application.
+
+If you select TanStack Store in the TanStack menu, the separate state-management question is skipped. TanStack Store is configured through its own example instead of adding another state library.
+
+## Forms and validation
+
+Choose [React Hook Form](https://react-hook-form.com/), [Formik](https://formik.org/), or no separate form library. If TanStack Form is selected in the TanStack menu, the separate form question is skipped. The Zod question is always available, including when no form library is selected.
+
+Selected form libraries include a working example. With [Zod](https://zod.dev/), the generator adds a reusable schema and connects it to the selected example: React Hook Form uses `@hookform/resolvers`, Formik maps validation issues to its errors, and TanStack Form uses the schema in its field validator. With Zod alone, import the schema from `src/forms/schema`. The resolver package is added only for React Hook Form with Zod.
 
 ## Testing generated projects
 

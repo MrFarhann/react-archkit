@@ -106,7 +106,7 @@ test('invalid or duplicate TanStack selections fail before files are written', a
   assert.deepEqual(await readdir(dir), [])
 })
 
-async function runCheckboxInterview(cwd, cliPath, keys) {
+async function runCheckboxInterview(cwd, cliPath, keys, hasForm = false) {
   const steps = [
     ['Do you want a Progressive Web App (PWA)?', '\x1b[B\r'],
     ['Which architecture do you want?', '\r'],
@@ -118,6 +118,9 @@ async function runCheckboxInterview(cwd, cliPath, keys) {
     ['Do you want Graphify?', '\x1b[B\r'],
     ['Which testing tools do you want?', '\x1b[B\r'],
     ['Which TanStack tools do you want to use?', keys],
+    ...(!hasForm ? [['Which form management library do you want?', '\r']] : []),
+    ['Do you want Zod schema validation?', '\r'],
+    ['Which state management library do you want?', '\r'],
     ['Create this project?', '\r'],
   ]
   const child = spawn(process.execPath, [cliPath, 'sample-app'], {
@@ -147,7 +150,7 @@ async function runCheckboxInterview(cwd, cliPath, keys) {
 test('CLI checkbox can select Query and Form together', { timeout: 30000 }, async t => {
   const cwd = await mkdtemp(path.join(os.tmpdir(), 'archkit-tanstack-cli-'))
   t.after(() => rm(cwd, { recursive: true, force: true }))
-  const output = await runCheckboxInterview(cwd, cli, '\x1b[B \x1b[B\x1b[B\x1b[B \r')
+  const output = await runCheckboxInterview(cwd, cli, '\x1b[B \x1b[B\x1b[B\x1b[B \r', true)
   const pkg = JSON.parse(await readFile(path.join(cwd, 'sample-app', 'package.json'), 'utf8'))
   assert.ok(pkg.dependencies[packages.query], output)
   assert.ok(pkg.dependencies[packages.form], output)
